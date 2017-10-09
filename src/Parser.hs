@@ -58,20 +58,31 @@ parseFnDef ts = do
 
 -- Helpers for parsing expressions
 parseExprs :: [Token] -> Int -> Parse [Expr]
+parseExprs [] _ = Left ("No tokens to parse", [])
 parseExprs ts depth =
+  case parseExprsHelper ([], ts) depth of
+    ([], _) -> Left ("No expressions parsed", ts)
+    (es, ts') -> Right (es, ts')
+
+parseExprsHelper :: ([Expr], [Token]) -> Int -> ([Expr], [Token])
+parseExprsHelper (es, ts) depth =
   case parseExpr ts depth of
     Right (expr, ts') -> concatExpr expr $ parseExprs ts' depth
-    Left s -> Left s
+    Left _ -> (es, ts)
 
-concatExpr :: Expr -> Parse [Expr] -> Parse [Expr]
-concatExpr _ (Left s) = Left s
-concatExpr expr (Right (exprs, ts)) = Right ((expr : exprs), ts)
+concatExpr :: Expr -> Parse [Expr] -> ([Expr], [Token])
+concatExpr e (Left (s, ts)) = ([e], ts)
+concatExpr e (Right (es, ts)) = (e:es, ts)
 
 parseFnCall :: [Token] -> Int -> Parse Expr
-parseFnCall ts depth = do
-  (Variable name, ts') <- parseVar ts
-  (exprs, ts'') <- parseExprs ts' depth
-  return (FnCall name exprs, ts'')
+parseFnCall ts depth =
+  case parseVar ts of
+    Left (s, _) -> Left (s, ts)
+    Right (Variable name, ts') ->
+      case parseExprs ts' depth of
+        Left (s, _) -> Left (s, ts)
+        Right (exprs, ts'') ->
+          Right (FnCall name exprs, ts'')
 
 parseOperator :: [Token] -> Parse String
 parseOperator (Operator o : ts) = Right (o, ts)
@@ -89,12 +100,20 @@ scanUntilOperator ts =
 
 
 parseInfix :: [Token] -> Int -> Parse Expr
-parseInfix ts depth = do
-  let (tsBeforeOp, ts') = scanUntilOperator ts
-  (expr1, _) <- parseExpr tsBeforeOp depth
-  (op, ts'') <- parseOperator ts'
-  (expr2, ts''') <- parseExpr ts'' depth
-  return (Infix op expr1 expr2, ts''')
+parseInfix ts depth =
+  let
+    (tsBeforeOp, ts') = scanUntilOperator ts
+  in
+    case parseExpr tsBeforeOp depth of
+      Left (s, _) -> Left (s, ts)
+      Right (expr1, _) ->
+        case parseOperator ts' of
+          Left (s, _) -> Left (s, ts)
+          Right (op, ts'') ->
+            case parseExpr ts'' depth of
+              Left (s, _) -> Left (s, ts)
+              Right (expr2, ts''') ->
+                Right (Infix op expr1 expr2, ts''')
 
 parseVal :: [Token] -> Parse Expr
 parseVal (Number n : ts) = Right (Value n, ts)
