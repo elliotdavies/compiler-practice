@@ -77,9 +77,21 @@ parseOperator :: [Token] -> Parse String
 parseOperator (Operator o : ts) = Right (o, ts)
 parseOperator ts = Left ("Couldn't parse infix operator", ts)
 
+scanUntilOperator :: [Token] -> ([Token], [Token])
+scanUntilOperator ts =
+  scanHelper ([], ts)
+  where
+    scanHelper (xs, ys) =
+      case ys of
+        [] -> (xs, ys)
+        (Operator _: ys') -> (xs, ys)
+        (y: ys) -> scanHelper (xs ++ [y], ys)
+
+
 parseInfix :: [Token] -> Int -> Parse Expr
 parseInfix ts depth = do
-  (expr1, ts') <- parseExpr ts depth
+  let (tsBeforeOp, ts') = scanUntilOperator ts
+  (expr1, _) <- parseExpr tsBeforeOp depth
   (op, ts'') <- parseOperator ts'
   (expr2, ts''') <- parseExpr ts'' depth
   return (Infix op expr1 expr2, ts''')
@@ -98,9 +110,9 @@ parseExpr ts depth =
   then Left ("Max depth exceeded", ts)
   else
     -- First try to parse a function call
-    -- case parseFnCall ts (depth - 1) of
-    --   Right (fnCall, ts') -> Right (fnCall, ts')
-    --   Left s ->
+    case parseFnCall ts (depth - 1) of
+      Right (fnCall, ts') -> Right (fnCall, ts')
+      Left s ->
         -- Else try to parse an infix operator
         case parseInfix ts (depth - 1) of
           Right (infix', ts') -> Right (infix', ts')

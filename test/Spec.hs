@@ -77,7 +77,12 @@ parserTests = TestLabel "Parser" $ test [
       let tks = [ Number 1, Operator "+", Number 2 ]
       let expectedDef = Infix "+" (Value 1) (Value 2)
       let expectedParse = Right (expectedDef, [])
-      assertEqual "parses infixes" expectedParse (parseInfix tks 2)
+      assertEqual "parses infixes" expectedParse (parseInfix tks 1)
+
+      let tks = [ Number 1, Operator "+", Number 2 ]
+      let expectedDef = Infix "+" (Value 1) (Value 2)
+      let expectedParse = Right (expectedDef, [])
+      assertEqual "at arbitrary depth" expectedParse (parseInfix tks 3)
 
       let tks = [ Number 1, Operator "+", Number 2, Number 3 ]
       let expectedDef = Infix "+" (Value 1) (Value 2)
@@ -90,12 +95,12 @@ parserTests = TestLabel "Parser" $ test [
       assertEqual "with mixed exprs" expectedParse (parseInfix tks 2)
     ,
 
-    -- "parseFnCall" ~: do
-    --   let tks = [ Name "f", Number 1, Number 2 ]
-    --   let expectedDef = FnCall "f" [ Value 1, Value 2 ]
-    --   let expectedParse = Right (expectedDef, [])
-    --   assertEqual "parses fn calls" expectedParse (parseFnCall tks 2)
-    -- ,
+    "parseFnCall" ~: do
+      let tks = [ Name "f", Number 1, Number 2 ]
+      let expectedDef = FnCall "f" [ Value 1, Value 2 ]
+      let expectedParse = Right (expectedDef, [])
+      assertEqual "parses fn calls" expectedParse (parseFnCall tks 2)
+    ,
 
     "parseExpr" ~: do
       let tks = [ Name "a" ]
@@ -120,6 +125,12 @@ parserTests = TestLabel "Parser" $ test [
     --   let expectedParse = Right (expectedDefs, [])
     --   assertEqual "parses multiple exprs" expectedParse (parseExprs tks 1)
     -- ,
+
+    "scanUntilOperator" ~: do
+      let tks = [ Number 1, Name "a", Operator "+", Number 2 ]
+      let expected = ([ Number 1, Name "a" ], [ Operator "+", Number 2 ])
+      assertEqual "scans until an operator" expected (scanUntilOperator tks)
+    ,
 
     "concatExpr" ~: do
       let expr = Value 1
