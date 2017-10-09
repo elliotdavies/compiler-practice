@@ -157,6 +157,7 @@ maxDepth = 10
 
 -- @TODO How best to chain these?
 parseDecl :: [Token] -> Parse Decl
+parseDecl (LineBreak : ts) = parseDecl ts
 parseDecl ts =
   -- First try to parse a FnDef
   case parseFnDef ts of

@@ -8,7 +8,7 @@ data Token
   | Operator String
   | Name String
   | Number Int
-  -- | LineBreak
+  | LineBreak
   deriving (Show, Eq)
 
 -- Helpers
@@ -24,7 +24,7 @@ lexer :: String -> [Token]
 lexer =
   let
     lineToTokens = map toToken . words
-    withBreak s = lineToTokens s -- ++ [LineBreak]
+    withBreak s = lineToTokens s ++ [LineBreak]
     notEmpty s = s /= ""
   in
     concatMap withBreak . filter notEmpty . lines
