@@ -1,9 +1,9 @@
 module Main where
 
-import Data.List (intersperse)
-
 import Lexer (lexer, Token)
 import Parser (parser, AST(AST))
+import CodeGen (generateCode)
+import Helpers (join)
 
 main :: IO ()
 main = do
@@ -14,11 +14,18 @@ main = do
   let ast = parser tokens
   putStrLn "\nAST:"
   putStrLn $ printAst ast
+  printCodeGen ast
+
+  where
+    printCodeGen ast =
+      case ast of
+        Right a -> do
+          putStrLn "\nCode:"
+          putStrLn $ generateCode a
+
+        Left a -> return ()
 
 -- Pretty printing
-join :: String -> [String] -> String
-join s = foldr (++) "" . intersperse s
-
 printTokens :: [Token] -> String
 printTokens = join ", " . map show
 

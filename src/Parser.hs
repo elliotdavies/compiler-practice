@@ -1,7 +1,6 @@
 module Parser where
 
 import Lexer (Token(..))
-import Debug.Trace (trace)
 
 -- Types
 data AST
