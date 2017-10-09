@@ -50,11 +50,17 @@ parseBody ts =
     Right (expr, ts') -> Right (expr, ts')
 
 parseFnDef :: [Token] -> Parse FnDef
-parseFnDef ts = do
-  (name, ts') <- parseName ts
-  (params, ts'') <- parseParams ts'
-  (body, ts''') <- parseBody ts''
-  return (FnDef name params body, ts''')
+parseFnDef ts =
+  case parseName ts of
+    Left (s, _) -> Left (s, ts)
+    Right (name, ts') ->
+      case parseParams ts' of
+        Left (s, _) -> Left (s, ts)
+        Right (params, ts'') ->
+          case parseBody ts'' of
+            Left (s, _) -> Left (s, ts)
+            Right (body, ts''') ->
+              Right (FnDef name params body, ts''')
 
 -- Helpers for parsing expressions
 parseExprs :: [Token] -> Int -> Parse [Expr]
@@ -156,7 +162,7 @@ parseDecl ts =
   case parseFnDef ts of
     Right (fnDef, ts') -> Right (FnDecl fnDef, ts')
     Left s ->
-      -- If unsuccessful, try to parse am Expr
+      -- If unsuccessful, try to parse an Expr
       case parseExpr ts maxDepth of
         Right (expr, ts') -> Right (EDecl expr, ts')
         -- If still unsuccessful, return an error
@@ -169,8 +175,9 @@ parseTokens ts =
     Left s -> Left s
 
 concatDecl :: Decl -> Either Err [Decl] -> Either Err [Decl]
-concatDecl _ (Left s) = Left s
-concatDecl decl (Right decls) = Right (decl : decls)
+concatDecl d (Left s) = Right [d]
+concatDecl d (Right ds) = Right (d:ds)
+
 
 -- Parser
 parser :: [Token] -> Either Err AST

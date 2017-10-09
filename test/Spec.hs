@@ -85,79 +85,79 @@ parserTests = TestLabel "Parser" $ test [
       let tks = [ Number 1, Operator "+", Number 2 ]
       let expectedDef = Infix "+" (Value 1) (Value 2)
       let expectedParse = Right (expectedDef, [])
-      assertEqual "parses infixes" expectedParse (parseInfix tks 1)
+      assertEqual "parses infixes" expectedParse (parseInfix tks 10)
 
       let tks = [ Number 1, Operator "+", Number 2 ]
       let expectedDef = Infix "+" (Value 1) (Value 2)
       let expectedParse = Right (expectedDef, [])
-      assertEqual "at arbitrary depth" expectedParse (parseInfix tks 3)
+      assertEqual "at arbitrary depth" expectedParse (parseInfix tks 10)
 
       let tks = [ Number 1, Operator "+", Number 2, Number 3 ]
       let expectedDef = Infix "+" (Value 1) (Value 2)
       let expectedParse = Right (expectedDef, [ Number 3 ])
-      assertEqual "returns other tokens" expectedParse (parseInfix tks 2)
+      assertEqual "returns other tokens" expectedParse (parseInfix tks 10)
 
       let tks = [ Name "a", Operator "+", Number 2, Number 3 ]
       let expectedDef = Infix "+" (Variable "a") (Value 2)
       let expectedParse = Right (expectedDef, [ Number 3 ])
-      assertEqual "with mixed exprs" expectedParse (parseInfix tks 2)
+      assertEqual "with mixed exprs" expectedParse (parseInfix tks 10)
 
       let tks = [ Operator "+", Number 2 ]
       let expectedParse = Left ("Couldn't parse expr: var", tks)
-      assertEqual "should fail if no first expr is found" expectedParse (parseInfix tks 2)
+      assertEqual "should fail if no first expr is found" expectedParse (parseInfix tks 10)
 
       let tks = [ Name "a", Number 2 ]
       let expectedParse = Left ("Couldn't parse infix operator", tks)
-      assertEqual "should fail if no operator is found" expectedParse (parseInfix tks 2)
+      assertEqual "should fail if no operator is found" expectedParse (parseInfix tks 10)
 
       let tks = [ Name "a", Operator "+" ]
       let expectedParse = Left ("Couldn't parse expr: var", tks)
-      assertEqual "should fail if no second expr is found" expectedParse (parseInfix tks 2)
+      assertEqual "should fail if no second expr is found" expectedParse (parseInfix tks 10)
     ,
 
     "parseFnCall" ~: do
       let tks = [ Name "f", Number 1, Number 2 ]
       let expectedDef = FnCall "f" [ Value 1, Value 2 ]
       let expectedParse = Right (expectedDef, [])
-      assertEqual "parses fn calls" expectedParse (parseFnCall tks 1)
+      assertEqual "parses fn calls" expectedParse (parseFnCall tks 10)
 
       let tks = [ Number 1, Name "f", Number 2 ]
       let expectedParse = Left ("Couldn't parse expr: var", tks)
-      assertEqual "should fail for invalid calls" expectedParse (parseFnCall tks 1)
+      assertEqual "should fail for invalid calls" expectedParse (parseFnCall tks 10)
     ,
 
     "parseExpr" ~: do
       let tks = [ Name "a" ]
       let expectedDef = Variable "a"
       let expectedParse = Right (expectedDef, [])
-      assertEqual "var" expectedParse (parseExpr tks 2)
+      assertEqual "var" expectedParse (parseExpr tks 10)
 
       let tks = [ Number 1 ]
       let expectedDef = Value 1
       let expectedParse = Right (expectedDef, [])
-      assertEqual "val" expectedParse (parseExpr tks 2)
+      assertEqual "val" expectedParse (parseExpr tks 10)
 
       let tks = [ Number 1, Operator "+", Name "b" ]
       let expectedDef = Infix "+" (Value 1) (Variable "b")
       let expectedParse = Right (expectedDef, [])
-      assertEqual "infix" expectedParse (parseExpr tks 2)
+      assertEqual "infix" expectedParse (parseExpr tks 10)
     ,
 
     "parseExprs" ~: do
-      let tks = [ Name "a", Number 2, Number 3 ]
-      let expectedDefs = [ Variable "a", Value 2, Value 3 ]
+      let tks = [ Number 1, Name "a", Number 2, Number 3 ]
+      let expectedDefs = [ Value 1, FnCall "a" [ Value 2, Value 3 ] ]
       let expectedParse = Right (expectedDefs, [])
-      assertEqual "parses multiple exprs" expectedParse (parseExprs tks 1)
+      assertEqual "parses multiple exprs" expectedParse (parseExprs tks 10)
 
       let tks = [ Number 2, Operator "+", Number 3 ]
       let expectedDefs = [ Infix "+" (Value 2) (Value 3) ]
       let expectedParse = Right (expectedDefs, [])
-      assertEqual "parses infixes" expectedParse (parseExprs tks 2)
+      assertEqual "parses infixes" expectedParse (parseExprs tks 10)
 
       let tks = [ Number 2, Operator "+", Number 3, Name "a" ]
       let expectedDefs = [ Infix "+" (Value 2) (Value 3), Variable "a" ]
       let expectedParse = Right (expectedDefs, [])
-      assertEqual "parses multiple exprs incl infixes" expectedParse (parseExprs tks 2)
+      assertEqual "parses multiple exprs incl infixes" expectedParse (parseExprs tks 10)
     ,
 
     "scanUntilOperator" ~: do

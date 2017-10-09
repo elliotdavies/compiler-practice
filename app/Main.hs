@@ -7,7 +7,7 @@ import Parser (parser, AST(AST))
 
 main :: IO ()
 main = do
-  sourceCode <- readFile "samples/test.elliot"
+  sourceCode <- readFile "samples/test2.elliot"
   let tokens = lexer sourceCode
   putStrLn $ "\nTokens (" ++ show (length tokens) ++ "):"
   putStrLn $ printTokens tokens
