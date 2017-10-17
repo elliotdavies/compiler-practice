@@ -1,6 +1,7 @@
 module Lexer where
 
 import Data.Char (isDigit)
+import Data.List (intersperse)
 
 -- Types
 data Token
@@ -23,8 +24,11 @@ toToken s
 lexer :: String -> [Token]
 lexer =
   let
-    lineToTokens = map toToken . words
-    withBreak s = lineToTokens s ++ [LineBreak]
-    notEmpty s = s /= ""
+    lineToTokens =
+      map toToken . words
   in
-    concatMap withBreak . filter notEmpty . lines
+    concat .
+    intersperse [LineBreak] .
+    map lineToTokens .
+    filter (/= "") .
+    lines
