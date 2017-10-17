@@ -3,3 +3,5 @@ add a b = a + b
 y = 1
 
 x = add y 2
+
+x

@@ -17,7 +17,7 @@ generateDecl decl =
       generateFnDef fnDef
 
     EDecl eDef ->
-      "edecls not yet implemented"
+      generateEDecl eDef
 
 -- Generate code for a function definition
 generateFnDef :: FnDef -> String
@@ -33,22 +33,40 @@ generateFnDef (FnDef name params body) =
     (generateParams params) ++ ") => " ++
     (generateExpr body) ++ ";"
 
+-- Generate code for a top-level expression
+generateEDecl :: Expr -> String
+generateEDecl expr =
+  let
+    edecl =
+      case expr of
+        Variable name ->
+          generateFnCall name []
+
+        otherwise ->
+          generateExpr expr
+  in
+    edecl ++ ";"
+
 -- Generate code for an expression
 generateExpr :: Expr -> String
 generateExpr expr =
+  case expr of
+    FnCall name exprs ->
+      generateFnCall name exprs
+
+    Infix op expr1 expr2 ->
+      generateExpr expr1 ++ " " ++ op ++ " " ++ generateExpr expr2
+
+    Value n ->
+      show n
+
+    Variable s ->
+      s
+
+generateFnCall :: String -> [Expr] -> String
+generateFnCall name exprs =
   let
     generateExprs exprs =
       join ", " $ fmap generateExpr exprs
   in
-    case expr of
-      FnCall name exprs ->
-        name ++ "(" ++ generateExprs exprs ++ ")"
-
-      Infix op expr1 expr2 ->
-        generateExpr expr1 ++ " " ++ op ++ " " ++ generateExpr expr2
-
-      Value n ->
-        show n
-
-      Variable s ->
-        s
+    name ++ "(" ++ generateExprs exprs ++ ")"
