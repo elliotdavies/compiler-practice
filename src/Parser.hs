@@ -3,6 +3,7 @@ module Parser where
 import Lexer (Token(..))
 
 import Data.Either.Combinators (mapLeft)
+import Data.Functor.Alt ((<!>))
 
 -- Types
 data AST
@@ -30,6 +31,8 @@ data Expr
 
 type Err = (String, [Token])
 type Parse a = Either Err (a, [Token])
+
+maxDepth = 10
 
 -- Helpers for parsing function definitions
 parseName :: [Token] -> Parse String
@@ -123,27 +126,14 @@ parseExpr ts depth =
   then Left ("Max depth exceeded", ts)
   else
     -- First try to parse a function call
-    case parseFnCall ts (depth - 1) of
-      Right (fnCall, ts') -> Right (fnCall, ts')
-      Left s ->
-        -- Else try to parse an infix operator
-        case parseInfix ts (depth - 1) of
-          Right (infix', ts') -> Right (infix', ts')
-          Left s ->
-            -- Else a value
-            case parseVal ts of
-              Right (val, ts') -> Right (val, ts')
-              Left s ->
-                -- Else a variable
-                case parseVar ts of
-                  Right (var, ts') -> Right (var, ts')
-                  Left s -> Left s
+    parseFnCall ts (depth - 1) <!>
+    -- Else try to parse an infix operator
+    parseInfix ts (depth - 1) <!>
+    -- Else a value
+    parseVal ts <!>
+    -- Else a variable
+    parseVar ts
 
--- Return an error if unable to parse a decl, or
--- return the decl and any remaining tokens
-maxDepth = 10
-
--- @TODO How best to chain these?
 parseDecl :: [Token] -> Parse Decl
 parseDecl (LineBreak : ts) = parseDecl ts
 parseDecl ts =
