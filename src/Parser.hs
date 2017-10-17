@@ -162,8 +162,8 @@ scanUntilOperator tokens =
         (Operator _: ys') ->
           (xs, ys)
 
-        (y: ys) ->
-          scanHelper (xs ++ [y], ys)
+        (y: ys') ->
+          scanHelper (xs ++ [y], ys')
 
 -- Parse an infix expression
 parseInfix :: [Token] -> Int -> Parse Expr
