@@ -25,10 +25,18 @@ main = do
 
         Left a -> return ()
 
--- Pretty printing
+
+{- Pretty printing
+-}
+
 printTokens :: [Token] -> String
 printTokens = join ", " . map show
 
 printAst :: Either (String, [Token]) AST -> String
-printAst (Right (AST defs)) = join "\n" $ map show defs
-printAst (Left (s, ts)) = s ++ "\n" ++ (printTokens ts)
+printAst parse =
+  case parse of
+    Right (AST defs) ->
+      join "\n" $ map show defs
+
+    Left (s, ts) ->
+      s ++ "\n" ++ (printTokens ts)

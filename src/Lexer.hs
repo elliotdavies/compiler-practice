@@ -3,7 +3,10 @@ module Lexer where
 import Data.Char (isDigit)
 import Data.List (intersperse)
 
--- Types
+
+{- Types
+-}
+
 data Token
   = Equals
   | Operator String
@@ -12,7 +15,10 @@ data Token
   | LineBreak
   deriving (Show, Eq)
 
--- Helpers
+
+{- Helpers
+-}
+
 toToken :: String -> Token
 toToken s
   | s == "=" = Equals
@@ -20,7 +26,10 @@ toToken s
   | all isDigit s = Number $ read s
   | otherwise = Name s
 
--- Lexer
+
+{- The lexer function
+-}
+
 lexer :: String -> [Token]
 lexer =
   let
