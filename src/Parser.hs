@@ -2,6 +2,8 @@ module Parser where
 
 import Lexer (Token(..))
 
+import Data.Either.Combinators (mapLeft)
+
 -- Types
 data AST
   = AST [ Decl ]
@@ -46,20 +48,15 @@ parseBody :: [Token] -> Parse Expr
 parseBody ts =
   case parseExpr ts maxDepth of
     Left (s, ts') -> Left ("Couldn't parse fndef: body. " ++ s, ts')
-    Right (expr, ts') -> Right (expr, ts')
+    Right r -> Right r
 
 parseFnDef :: [Token] -> Parse FnDef
 parseFnDef ts =
-  case parseName ts of
-    Left (s, _) -> Left (s, ts)
-    Right (name, ts') ->
-      case parseParams ts' of
-        Left (s, _) -> Left (s, ts)
-        Right (params, ts'') ->
-          case parseBody ts'' of
-            Left (s, _) -> Left (s, ts)
-            Right (body, ts''') ->
-              Right (FnDef name params body, ts''')
+  mapLeft (\(s, _) -> (s, ts)) $ do
+    (name, ts') <- parseName ts
+    (params, ts'') <- parseParams ts'
+    (body, ts''') <- parseBody ts''
+    return (FnDef name params body, ts''')
 
 -- Helpers for parsing expressions
 parseExprs :: [Token] -> Int -> Parse [Expr]
@@ -81,13 +78,10 @@ concatExpr e (Right (es, ts)) = (e:es, ts)
 
 parseFnCall :: [Token] -> Int -> Parse Expr
 parseFnCall ts depth =
-  case parseVar ts of
-    Left (s, _) -> Left (s, ts)
-    Right (Variable name, ts') ->
-      case parseExprs ts' depth of
-        Left (s, _) -> Left (s, ts)
-        Right (exprs, ts'') ->
-          Right (FnCall name exprs, ts'')
+  mapLeft (\(s, _) -> (s, ts)) $ do
+    (Variable name, ts') <- parseVar ts
+    (exprs, ts'') <- parseExprs ts' depth
+    return (FnCall name exprs, ts'')
 
 parseOperator :: [Token] -> Parse String
 parseOperator (Operator o : ts) = Right (o, ts)
@@ -109,16 +103,11 @@ parseInfix ts depth =
   let
     (tsBeforeOp, ts') = scanUntilOperator ts
   in
-    case parseExpr tsBeforeOp depth of
-      Left (s, _) -> Left (s, ts)
-      Right (expr1, _) ->
-        case parseOperator ts' of
-          Left (s, _) -> Left (s, ts)
-          Right (op, ts'') ->
-            case parseExpr ts'' depth of
-              Left (s, _) -> Left (s, ts)
-              Right (expr2, ts''') ->
-                Right (Infix op expr1 expr2, ts''')
+    mapLeft (\(s, _) -> (s, ts)) $ do
+      (expr1, _) <- parseExpr tsBeforeOp depth
+      (op, ts'') <- parseOperator ts'
+      (expr2, ts''') <- parseExpr ts'' depth
+      return (Infix op expr1 expr2, ts''')
 
 parseVal :: [Token] -> Parse Expr
 parseVal (Number n : ts) = Right (Value n, ts)
